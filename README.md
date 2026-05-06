@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="./images/logo.png" alt="OpenSearch-VL" width="220">
+  <img src="./images/logo.png" alt="OpenSearch-VL" width="35%">
 
   <h1 style="margin: 0; font-size: 1.8em;">
     An Open Recipe for Frontier Multimodal Search Agents
