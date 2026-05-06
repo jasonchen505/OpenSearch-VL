@@ -9,7 +9,7 @@ specific model is selected via a single `--model` flag.
 ## Layout
 
 ```
-code/infer/
+opensearch_vl/
 |-- run_infer.py              # Unified entrypoint (--model 8b|32b|30b-a3b|claude)
 |-- run_infer.sh              # Convenience wrapper that reads env variables
 |-- run_eval.sh               # Judge harness for BC-VL / HLE / VDR-Bench

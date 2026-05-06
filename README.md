@@ -28,7 +28,7 @@
 - [🛠️ Prerequisites](#%EF%B8%8F-prerequisites)
 - [🏋️ Agentic SFT · `code/SFT`](#%EF%B8%8F-agentic-sft--codesft)
 - [🚀 Agentic RL · `code/RL`](#-agentic-rl--coderl)
-- [📊 Inference & Evaluation · `code/infer`](#-inference--evaluation--codeinfer)
+- [📊 Inference & Evaluation · `opensearch_vl`](#-inference--evaluation--opensearch_vl)
 - [🚧 TODO](#-todo)
 - [🙌 Acknowledgements](#-acknowledgements)
 
@@ -58,7 +58,7 @@ This repository provides everything needed to **reproduce, fine-tune, and evalua
 |-----------|------|-------------|
 | **SFT Training** | [`SFT/`](SFT/) | Agentic cold-start with LLaMA-Factory + Ray + ZeRO-3 (full-parameter fine-tune of LLM + ViT + projector) |
 | **RL Training** | [`RL/`](RL/) | Asynchronous agentic RLOO/GRPO on top of SFT, built on rLLM + verl + Megatron-LM + sglang |
-| **Inference & Evaluation** | [`infer/`](infer/) | Unified `run_infer.py --model {8b,30b-a3b,32b,claude}` rollout + GPT-4o judge for BrowseComp-VL, HLE, VDR-Bench |
+| **Inference & Evaluation** | [`opensearch_vl/`](opensearch_vl/) | Unified `run_infer.py --model {8b,30b-a3b,32b,claude}` rollout + GPT-4o judge for BrowseComp-VL, HLE, VDR-Bench |
 | **Models** | [OpenSearch-VL](https://huggingface.co/OpenSearch-VL) | OpenSearch-VL-{8B, 30B-A3B, 32B} checkpoints |
 | **Datasets** | [OpenSearch-VL](https://huggingface.co/OpenSearch-VL) | SearchVL-SFT-36k (cold-start) and SearchVL-RL-8k (RL) |
 
@@ -92,7 +92,7 @@ OpenSearch-VL is equipped with a heterogeneous tool set $\mathcal{T} = \mathcal{
 - **Get started** → [Prerequisites](#-prerequisites)
 - **Train your own SFT model** → [Agentic SFT](#%EF%B8%8F-agentic-sft--codesft)
 - **Run agentic RL** → [Agentic RL](#-agentic-rl--coderl)
-- **Inference & benchmark** → [Inference & Evaluation](#-inference--evaluation--codeinfer)
+- **Inference & benchmark** → [Inference & Evaluation](#-inference--evaluation--opensearch_vl)
 
 ---
 
@@ -166,7 +166,7 @@ code/
 │   ├── mbridge/                   # HF ↔ Megatron parallelism bridge
 │   └── README.md                  # RL-specific instructions
 │
-├── infer/                         # inference + benchmark evaluation
+├── opensearch_vl/                 # inference + benchmark evaluation (first-party package)
 │   ├── run_infer.py               # unified entrypoint (--model 8b|32b|30b-a3b|claude)
 │   ├── run_infer.sh               # env-driven launcher around run_infer.py
 │   ├── eval_with_gpt4o.py         # GPT-4o judge for BrowseComp-VL / HLE / VDR-Bench
@@ -200,18 +200,18 @@ All keys are optional; components gracefully no-op if unset.
 | Variable | Used by | Purpose |
 | --- | --- | --- |
 | `API_GATEWAY_HOST` / `API_GATEWAY_USER` / `API_GATEWAY_KEY` | RL | Optional HMAC-secured gateway that proxies Serper + Jina behind one credential (set on RL workers). |
-| `API_HOST` / `API_USER` / `API_KEY` | infer | Same gateway, named to match the inference package's env vars. |
-| `SERPER_API_KEY` | RL, infer | [Serper.dev](https://serper.dev) text & image search (used when no gateway is configured). |
-| `JINA_API_KEY` | RL, infer | [Jina AI](https://jina.ai) reader (page visit / content extraction). |
-| `QWEN_API_BASE` / `QWEN_MODEL_NAME` | infer | OpenAI-compatible chat-completions server used for search summarization (defaults to a local Qwen3-32B). |
-| `LAYOUT_PARSING_API_URL` / `LAYOUT_PARSING_TOKEN` | RL, infer | PP-StructureV3-compatible OCR / layout endpoint. |
-| `CLAUDE_API_HOST` / `CLAUDE_API_USER` / `CLAUDE_API_KEY` | infer | Optional HMAC-secured gateway for the Claude Opus 4.5 backend. |
-| `JUDGE_API_BASE_URL` / `JUDGE_APP_ID` / `JUDGE_APP_KEY` / `JUDGE_MODEL_MARKER` | infer | OpenAI-compatible GPT-4o judge used by `eval_with_gpt4o.py`. |
-| `QWEN3VL_8B_PATH` / `QWEN3VL_32B_PATH` / `QWEN3VL_30B_A3B_PATH` | infer | Local checkpoints for the three Qwen3-VL variants (overrideable via `--checkpoint`). |
-| `FVQA_IMAGE_DIR` | infer | Optional fallback directory of `<case_id>.<ext>` images used when a benchmark URL is unreachable. |
+| `API_HOST` / `API_USER` / `API_KEY` | opensearch_vl | Same gateway, named to match the inference package's env vars. |
+| `SERPER_API_KEY` | RL, opensearch_vl | [Serper.dev](https://serper.dev) text & image search (used when no gateway is configured). |
+| `JINA_API_KEY` | RL, opensearch_vl | [Jina AI](https://jina.ai) reader (page visit / content extraction). |
+| `QWEN_API_BASE` / `QWEN_MODEL_NAME` | opensearch_vl | OpenAI-compatible chat-completions server used for search summarization (defaults to a local Qwen3-32B). |
+| `LAYOUT_PARSING_API_URL` / `LAYOUT_PARSING_TOKEN` | RL, opensearch_vl | PP-StructureV3-compatible OCR / layout endpoint. |
+| `CLAUDE_API_HOST` / `CLAUDE_API_USER` / `CLAUDE_API_KEY` | opensearch_vl | Optional HMAC-secured gateway for the Claude Opus 4.5 backend. |
+| `JUDGE_API_BASE_URL` / `JUDGE_APP_ID` / `JUDGE_APP_KEY` / `JUDGE_MODEL_MARKER` | opensearch_vl | OpenAI-compatible GPT-4o judge used by `eval_with_gpt4o.py`. |
+| `QWEN3VL_8B_PATH` / `QWEN3VL_32B_PATH` / `QWEN3VL_30B_A3B_PATH` | opensearch_vl | Local checkpoints for the three Qwen3-VL variants (overrideable via `--checkpoint`). |
+| `FVQA_IMAGE_DIR` | opensearch_vl | Optional fallback directory of `<case_id>.<ext>` images used when a benchmark URL is unreachable. |
 | `WANDB_API_KEY` | SFT, RL | W&B logging. |
 
-Two templates are provided: [`RL/rllm/.env.example`](RL/rllm/.env.example) for the RL workers, and [`infer/.env.example`](infer/.env.example) for inference + judge. Copy whichever applies and source it before launching.
+Two templates are provided: [`RL/rllm/.env.example`](RL/rllm/.env.example) for the RL workers, and [`opensearch_vl/.env.example`](opensearch_vl/.env.example) for inference + judge. Copy whichever applies and source it before launching.
 
 ---
 
@@ -371,14 +371,14 @@ Checkpoints go to `checkpoints/${project_name}/${exp_name}/`; trajectories can b
 
 ---
 
-## 📊 Inference & Evaluation · `code/infer`
+## 📊 Inference & Evaluation · `opensearch_vl`
 
 Modular Python package that drives the trained model as a **tool-using Visual Investigation Agent**, plus a **GPT-4o judge** for standardized benchmark scoring. The same agent loop, tool environment and search/visual utilities are shared across all three Qwen3-VL backends and the optional Claude Opus 4.5 backend; the variant is selected with a single `--model` flag.
 
 ### Package layout
 
 ```
-infer/
+opensearch_vl/
 ├── run_infer.py                  # unified entrypoint (--model 8b|32b|30b-a3b|claude)
 ├── run_infer.sh                  # env-driven wrapper around run_infer.py
 ├── run_eval.sh                   # env-driven judge driver across all benchmarks
@@ -413,35 +413,35 @@ Multi-GPU model parallelism is enabled automatically when `--gpus 0,1,...` lists
 
 ```bash
 # Source the env template first; only the entries you need have to be filled in.
-cp infer/.env.example ~/.opensearch-vl.env
+cp opensearch_vl/.env.example ~/.opensearch-vl.env
 source ~/.opensearch-vl.env
 
 # Dense Qwen3-VL-8B on a single GPU
-python infer/run_infer.py --model 8b --gpus 0 \
+python opensearch_vl/run_infer.py --model 8b --gpus 0 \
     --data-path  /path/to/benchmark.parquet \
     --output-dir ./outputs/opensearch_vl_8b \
     --start 0 --end 1000
 
 # MoE Qwen3-VL-30B-A3B with 4-way model parallel (auto-applies the scatter dtype patch)
-python infer/run_infer.py --model 30b-a3b --gpus 0,1,2,3 \
+python opensearch_vl/run_infer.py --model 30b-a3b --gpus 0,1,2,3 \
     --checkpoint /path/to/OpenSearch-VL-30B-A3B \
     --data-path  /path/to/benchmark.parquet \
     --output-dir ./outputs/opensearch_vl_30b_a3b
 
 # Claude Opus 4.5 (CLAUDE_API_HOST / _USER / _KEY required)
-python infer/run_infer.py --model claude \
+python opensearch_vl/run_infer.py --model claude \
     --data-path  /path/to/benchmark.parquet \
     --output-dir ./outputs/claude_opus
 ```
 
-The shell wrapper `infer/run_infer.sh` reads the same parameters from environment variables (`MODEL`, `GPUS`, `DATA_PATH`, `OUTPUT_DIR`, `LIMIT`, `CATEGORY`, ...) for one-line invocations.
+The shell wrapper `opensearch_vl/run_infer.sh` reads the same parameters from environment variables (`MODEL`, `GPUS`, `DATA_PATH`, `OUTPUT_DIR`, `LIMIT`, `CATEGORY`, ...) for one-line invocations.
 
 ### Benchmark evaluation
 
-[`eval_with_gpt4o.py`](infer/eval_with_gpt4o.py) consumes the trajectory directory produced above and calls a GPT-4o-class judge to compute per-sample correctness using the **VDR-Bench evaluation prompt**:
+[`eval_with_gpt4o.py`](opensearch_vl/eval_with_gpt4o.py) consumes the trajectory directory produced above and calls a GPT-4o-class judge to compute per-sample correctness using the **VDR-Bench evaluation prompt**:
 
 ```bash
-python infer/eval_with_gpt4o.py \
+python opensearch_vl/eval_with_gpt4o.py \
     --traj_dir    ./outputs/opensearch_vl_8b/bc_vl_level1 \
     --benchmark   bc_vl            # one of: hle | bc_vl | vdr
     --max_workers 20
@@ -449,13 +449,13 @@ python infer/eval_with_gpt4o.py \
 
 `--answer_file` is required for VDR-Bench (pass the `.parquet` with `id` / `answer` columns).
 
-[`run_eval.sh`](infer/run_eval.sh) is a thin driver that chains the five reported evaluations (BrowseComp-VL L1, BrowseComp-VL L2, HLE, VDR-Bench testmini × 2 models). Configure trajectory directories via env variables (`TRAJ_BC_VL_LEVEL1`, `TRAJ_BC_VL_LEVEL2`, `TRAJ_HLE`, `TRAJ_VDR_PRIMARY`, `TRAJ_VDR_SECONDARY`, `VDR_ANSWER_PARQUET`) and run:
+[`run_eval.sh`](opensearch_vl/run_eval.sh) is a thin driver that chains the five reported evaluations (BrowseComp-VL L1, BrowseComp-VL L2, HLE, VDR-Bench testmini × 2 models). Configure trajectory directories via env variables (`TRAJ_BC_VL_LEVEL1`, `TRAJ_BC_VL_LEVEL2`, `TRAJ_HLE`, `TRAJ_VDR_PRIMARY`, `TRAJ_VDR_SECONDARY`, `VDR_ANSWER_PARQUET`) and run:
 
 ```bash
-bash infer/run_eval.sh --workers 20
+bash opensearch_vl/run_eval.sh --workers 20
 ```
 
-> Full inference details: [`code/infer/README.md`](infer/README.md).
+> Full inference details: [`opensearch_vl/README.md`](opensearch_vl/README.md).
 
 ---
 
