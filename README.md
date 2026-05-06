@@ -1,7 +1,9 @@
 <div align="center">
 
+  <img src="./images/logo.png" alt="OpenSearch-VL" width="160">
+
   <h1 style="margin: 0; font-size: 1.8em;">
-    OpenSearch-VL: An Open Recipe for Frontier Multimodal Search Agents
+    An Open Recipe for Frontier Multimodal Search Agents
   </h1>
 
   <p><b>Cold-Start Agentic SFT &nbsp;·&nbsp; Multi-Turn Fatal-Aware GRPO &nbsp;·&nbsp; Visual Tool Use</b></p>
