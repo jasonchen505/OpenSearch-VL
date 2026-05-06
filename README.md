@@ -1,7 +1,7 @@
 <div align="center">
 
   <h1 style="margin: 0; font-size: 1.8em;">
-    OpenSearch-VL: An Open Multimodal Deep-Research Agent
+    OpenSearch-VL: An Open Recipe for Frontier Multimodal Search Agents
   </h1>
 
   <p><b>Cold-Start Agentic SFT &nbsp;·&nbsp; Multi-Turn Fatal-Aware GRPO &nbsp;·&nbsp; Visual Tool Use</b></p>
