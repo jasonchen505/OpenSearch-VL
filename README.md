@@ -6,6 +6,7 @@
   </h1>
 
   <p><b>Cold-Start Agentic SFT &nbsp;·&nbsp; Multi-Turn Fatal-Aware GRPO &nbsp;·&nbsp; Visual Tool Use</b></p>
+  
   [![Paper](https://img.shields.io/badge/paper-A42C25?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/pdf/2605.05185)
   [![alphaXiv](https://img.shields.io/badge/discussion-A42C25?style=for-the-badge&logo=arxiv&logoColor=white&color=blue)](https://www.alphaxiv.org/abs/2605.05185)
   [![Github](https://img.shields.io/badge/OpenSearch_VL-000000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/shawn0728/OpenSearch-VL)
