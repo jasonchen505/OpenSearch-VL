@@ -465,6 +465,7 @@ bash opensearch_vl/run_eval.sh --workers 20
 
 - [x] Release **OpenSearch-VL-{8B, 30B-A3B, 32B}** checkpoints on the [HuggingFace collection](https://huggingface.co/OpenSearch-VL).
 - [x] Release **SearchVL-SFT-36k** and **SearchVL-RL-8k** datasets (full bundle + image assets).
+- [ ] Release the **data curation pipeline** (Wikipedia path sampling, fuzzy entity rewriting, source-anchor visual grounding) as a standalone toolkit.
 - [ ] Public **demo** for interactive multi-turn deep-research rollouts.
 
 All artifacts have entered the final approval stage. Stay tuned — once the approval process is complete, we will release them **ASAP**.
