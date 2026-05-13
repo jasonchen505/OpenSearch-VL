@@ -488,3 +488,23 @@ Project-specific additions are released under the root [`LICENSE`](LICENSE) (Apa
 
 ---
 
+## 📮 Contact
+
+For questions, feedback, or collaboration opportunities, feel free to reach out: csfufu0728@gmail.com
+
+
+## 📄Citation
+
+If you find our works useful for your research, please consider citing:
+```
+@article{chen2026opensearch,
+  title={OpenSearch-VL: An Open Recipe for Frontier Multimodal Search Agents},
+  author={Chen, Shuang and Feng, Kaituo and Chen, Hangting and Huang, Wenxuan and Dai, Dasen and Shou, Quanxin and Lin, Yunlong and Yue, Xiangyu and Gao, Shenghua and Pang, Tianyu},
+  journal={arXiv preprint arXiv:2605.05185},
+  year={2026}
+}
+```
+
+## ⭐️ Star HistoryMore actions
+
+[![Star History Chart](https://api.star-history.com/svg?repos=shawn0728/Unify-Agent&type=Date)](https://star-history.com/#shawn0728/OpenSearch-VL&Date)
