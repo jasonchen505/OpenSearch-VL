@@ -507,4 +507,4 @@ If you find our works useful for your research, please consider citing:
 
 ## ⭐️ Star HistoryMore actions
 
-[![Star History Chart](https://api.star-history.com/svg?repos=shawn0728/Unify-Agent&type=Date)](https://star-history.com/#shawn0728/OpenSearch-VL&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=shawn0728/OpenSearch-VL&type=Date)](https://star-history.com/#shawn0728/OpenSearch-VL&Date)
