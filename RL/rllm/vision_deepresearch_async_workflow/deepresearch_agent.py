@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import os
 import time
 from datetime import datetime
 from typing import Any, List, Optional
 
+import requests
 from PIL import Image
 import re
 from collections import Counter
@@ -275,6 +277,75 @@ def build_text_completion_prompt(
     return "\n".join(prompt_parts)
 
 
+# Safety cap on how many freshly produced images we forward back to the model
+# per tool call. Visual tools currently emit at most one new image per call, but
+# the cap protects context length and vision-encoder memory in case future tools
+# emit several at once.
+_MAX_ATTACHED_IMAGES_PER_TOOL = 4
+
+# Best-effort timeout for downloading tool-produced images hosted on COS / web.
+_IMAGE_DOWNLOAD_TIMEOUT = 30
+
+
+def _load_pil_from_payload(payload: Any) -> Optional[Image.Image]:
+    """Best-effort conversion of a tool-produced image payload into PIL.Image.
+
+    Visual tools store newly produced images in the shared ``image_paths`` dict
+    using one of several representations (see ``visual_tools._resolve_image_ref``
+    for the full taxonomy):
+
+    * ``http(s)://`` URL  (the default — uploaded to COS)
+    * an absolute local path (fallback when COS upload is disabled)
+    * raw ``bytes`` containing encoded image data
+    * a ``PIL.Image.Image`` instance
+    * a HuggingFace-style ``dict`` with ``bytes`` / ``path`` / ``url`` keys
+
+    Returns ``None`` if the payload cannot be decoded; callers should silently
+    skip such entries so a single corrupted image never aborts the rollout.
+    """
+    if isinstance(payload, Image.Image):
+        return payload
+
+    if isinstance(payload, bytes):
+        try:
+            return Image.open(io.BytesIO(payload)).convert("RGB")
+        except Exception:  # noqa: BLE001
+            return None
+
+    if isinstance(payload, str):
+        if payload.startswith(("http://", "https://")):
+            try:
+                resp = requests.get(payload, timeout=_IMAGE_DOWNLOAD_TIMEOUT)
+                resp.raise_for_status()
+                return Image.open(io.BytesIO(resp.content)).convert("RGB")
+            except Exception:  # noqa: BLE001
+                return None
+        if payload.startswith("data:image/"):
+            try:
+                import base64
+
+                _, encoded = payload.split(",", 1)
+                return Image.open(io.BytesIO(base64.b64decode(encoded))).convert("RGB")
+            except Exception:  # noqa: BLE001
+                return None
+        if os.path.exists(payload):
+            try:
+                return Image.open(payload).convert("RGB")
+            except Exception:  # noqa: BLE001
+                return None
+
+    if isinstance(payload, dict):
+        for key in ("bytes", "path", "url", "data"):
+            val = payload.get(key)
+            if val is None:
+                continue
+            pil = _load_pil_from_payload(val)
+            if pil is not None:
+                return pil
+
+    return None
+
+
 class MultiTurnReactAgent:
     """
     Multi-turn ReAct Agent adapted from Tongyi DeepResearch.
@@ -522,6 +593,16 @@ class MultiTurnReactAgent:
                 messages.append(assistant_message)
                 tool_error = False
 
+                # Snapshot image_paths before tool execution so we can detect
+                # any *newly produced* images (e.g. from crop / sharpen /
+                # perspective_correct / super_resolution) and feed them back
+                # to the multi-modal model in the next turn. This mirrors the
+                # behaviour of the inference pipeline in
+                # ``opensearch_vl/opensearch_infer/pipeline.py`` (see the
+                # ``new_images`` branch that appends ``image_url`` /
+                # ``inline_data`` parts to ``gemini_contents``).
+                prev_image_keys = set(self._image_paths.keys())
+
                 tool_call_text = content.split("<tool_call>")[1].split("</tool_call>")[
                     0
                 ]
@@ -562,7 +643,27 @@ class MultiTurnReactAgent:
                     assistant_message["step_error"] = True
 
                 tool_response = f"<tool_response>\n{result}\n</tool_response>"
-                messages.append({"role": "user", "content": tool_response})
+                tool_response_msg: dict[str, Any] = {
+                    "role": "user",
+                    "content": tool_response,
+                }
+
+                # Identify image_paths entries produced by this tool call and
+                # attach them as PIL images on the tool-response message so the
+                # vision encoder can actually see them on the next turn.
+                if not tool_error:
+                    new_image_keys = [
+                        k for k in self._image_paths if k not in prev_image_keys
+                    ]
+                    new_pil_images: List[Image.Image] = []
+                    for key in new_image_keys[:_MAX_ATTACHED_IMAGES_PER_TOOL]:
+                        pil = _load_pil_from_payload(self._image_paths[key])
+                        if pil is not None:
+                            new_pil_images.append(pil)
+                    if new_pil_images:
+                        tool_response_msg["images"] = new_pil_images
+
+                messages.append(tool_response_msg)
                 if assistant_message["step_error"]:
                     consecutive_bad_steps += 1
                 else:
