@@ -34,6 +34,8 @@
 - [📊 Inference & Evaluation · `opensearch_vl`](#-inference--evaluation--opensearch_vl)
 - [🚧 TODO](#-todo)
 - [🙌 Acknowledgements](#-acknowledgements)
+- [📮 Contact](#-contact)
+- [📄 Citation](#-citation)
 
 ---
 
@@ -493,7 +495,7 @@ Project-specific additions are released under the root [`LICENSE`](LICENSE) (Apa
 For questions, feedback, or collaboration opportunities, feel free to reach out: csfufu0728@gmail.com
 
 
-## 📄Citation
+## 📄 Citation
 
 If you find our works useful for your research, please consider citing:
 ```
