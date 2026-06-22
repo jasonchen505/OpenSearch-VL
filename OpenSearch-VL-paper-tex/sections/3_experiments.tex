@@ -1,0 +1,78 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\setlength{\textfloatsep}{2pt plus 1pt minus 1pt}
+\setlength{\floatsep}{2pt plus 1pt minus 1pt}
+\setlength{\intextsep}{2pt plus 1pt minus 1pt}
+\setlength{\dbltextfloatsep}{2pt plus 1pt minus 1pt}
+\setlength{\dblfloatsep}{2pt plus 1pt minus 1pt}
+
+We first describe our experimental setups as follows:
+
+\textbf{Models and Benchmarks.}
+Our \textsc{OpenSearch-VL} is built on three Qwen3-VL variants~\citep{Qwen3-VL}: \textit{Qwen3-VL-8B-Instruct}, \textit{Qwen3-VL-30B-A3B-Instruct}, and \textit{Qwen3-VL-32B-Instruct}. For evaluation, we use seven knowledge-intensive benchmarks from our main results:  SimpleVQA~\citep{cheng2025simplevqa}, VDR~\citep{vdr}, MMSearch~\citep{mmsearch}, LiveVQA~\citep{fu2025livevqa}, BrowseComp-VL~\citep{webwatcher}, FVQA~\citep{wang2017fvqa}, and InfoSeek~\citep{chen2023can}. Together, they cover visual entity recognition, web evidence retrieval, multi-hop reasoning, and long-tail QA.
+
+\textbf{Baselines and Evaluation Metrics.}
+We evaluate \textsc{OpenSearch-VL} against baseline types: Direct Reasoning, where the model answers from its parametric knowledge and visual perception alone; RAG Workflow, where external retrieval results are provided in-context but the reasoning remains single-pass; and Agentic Workflow, where the model autonomously interleaves reasoning with tool calls in a multimodal environment. We report Pass@1 on all seven benchmarks. Correctness is adjudicated by a \textit{GPT-4o} judge that compares the model's final response with the reference answer. To ensure fair comparison across heterogeneous answer styles, we adopt the same evaluation protocol as VDR-Bench~\citep{vdr}; the full judge prompt is provided in Figure~\ref{apdxfig:bench-judge}.
+
+\textbf{Datasets.}
+Our SFT data consists of the \textbf{36K} multi-turn trajectories synthesized by the procedure in Sec.~\ref{sec:trajectory-synthesis}. For RL training, we randomly sample \textbf{8K} examples from the VQA pool after the staged filtering and enhancement process in Sec.~\ref{sec:filtering-enhancement}, ensuring that these examples are disjoint from the VQA instances used to synthesize the SFT trajectories. 
+
+\textbf{Implementation Details.}
+\textsc{OpenSearch-VL} extends \textsc{LlamaFactory}~\citep{zheng2024llamafactory} for agentic SFT and builds on \textsc{rLLM}~\citep{rllm2025} and \textsc{VDR}~\citep{huang2026vision} for multi-turn tool-interleaved RL. All stages of \textsc{OpenSearch-VL} are trained on Nvidia H20 GPUs. Agentic SFT takes roughly 2 days for the 8B dense model and 4 days for the 30B-A3B MoE model on 256 H20s (32 nodes $\times$ 8 GPUs); the subsequent multi-turn fatal-aware GRPO stage runs for approximately 200 optimization steps over 10 days on 64 H20s (8 nodes $\times$ 8 GPUs). The complete per-stage hyperparameter configurations are listed in the following subsections (SFT in Table~\ref{tab:sft-config}; RL in Table~\ref{tab:rl-config}). More details are reported in Appendix~\ref{apdx:implementation-details}.
+
+
+
+\subsection{Main Results}
+
+
+\input{tables/search_qa}
+
+Table~\ref{tab:search-qa-main} reports the results on seven multimodal knowledge-intensive QA and web-search benchmarks. \textsc{OpenSearch-VL} exhibits a clear advantage over both direct-reasoning and RAG baselines across all scales, underscoring the necessity of an agentic loop for complex multimodal queries. Among 8B-scale agents, \textit{OpenSearch-VL-8B} achieves the best average score of \textbf{56.6}, surpassing the previous strongest open 8B agent, \textit{SenseNova-MARS-8B}, by \textbf{3.9} points on average. At larger scales, \textit{OpenSearch-VL-30B-A3B} and \textit{OpenSearch-VL-32B} further improve the average score to \textbf{61.6} and \textbf{63.7}, respectively; notably, \textit{OpenSearch-VL-32B} outperforms strong proprietary direct-reasoning models such as \textit{Gemini-2.5-Pro} and substantially exceeds the corresponding \textit{Qwen3-VL} agentic baselines. These results demonstrate that our training recipe scales effectively from 8B to 32B and yields strong gains on both search-heavy and visually grounded benchmarks.
+
+
+
+
+
+
+
+\subsection{Ablation Study}
+
+We conduct ablations on the Qwen3-VL-8B model to validate the two design choices that define \textsc{OpenSearch-VL}: the data synthesis pipeline that produces tool-demanding multimodal trajectories, and the fatal-aware RL recipe that improves the policy beyond offline imitation.
+
+\input{tables/ablation_combined}
+
+
+\textbf{Data Pipeline Ablation.} 
+Table~\ref{tab:data-pipeline-ablation} shows that each stage of our data synthesis pipeline contributes to the final performance. The full pipeline achieves the best average score of \textbf{64.6}, while removing source-anchor grounding, fuzzy entity rewriting, or staged filtering leads to large drops of 11.5, 10.3, and 8.2 points, respectively. These results indicate that effective training data must both prevent shortcut retrieval and preserve genuinely tool-demanding queries. Removing the enhancement subset causes a smaller but consistent decline ($64.6\rightarrow63.3$ Avg.), suggesting that image-restoration trajectories mainly improve robustness rather than driving the core gains.
+
+\textbf{Training Recipe Ablation.}
+Table~\ref{tab:training-recipe-ablation} studies the effect of our RL recipe after the same Qwen3-VL-8B SFT initialization, using Search-R1-style vanilla GRPO~\citep{jin2025searchr1trainingllmsreason} as the RL baseline. SFT improves the base model from 53.7 to 64.6 average accuracy, and vanilla GRPO further raises it to 67.6, showing the benefit of online exploration. The way fatal trajectories are handled is crucial: the hard-masking strategy of Vision-DeepResearch~\citep{huang2026vision} brings almost no gain over vanilla GRPO~\citep{jin2025searchr1trainingllmsreason, guo2025deepseek}($67.6\rightarrow67.7$), while fatal masking improves the average to 69.1 by preserving valid pre-failure reasoning. Our full method with one-sided advantage clamping achieves the best score on every benchmark and reaches \textbf{71.8} average accuracy, a 4.2-point gain over vanilla GRPO. The training curves in Fig.~\ref{fig:turn-acc-curves} are consistent with this result: fatal-aware GRPO sustains longer tool-use trajectories while achieving higher batch accuracy, indicating that it encourages productive exploration rather than prematurely suppressing difficult rollouts.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.84\linewidth]{figures/turn_acc_combined.pdf}
+    \caption{Training dynamics over the RL phase. \textbf{Left:} average
+    number of turns per rollout. \textbf{Right:} batch-level accuracy.
+    Fatal-aware GRPO sustains a higher number of turns \emph{and} reaches a
+    higher accuracy than vanilla GRPO~\citep{jin2025searchr1trainingllmsreason, guo2025deepseek} and the Hard-Mask~\citep{huang2026vision} baseline.}
+    \label{fig:turn-acc-curves}
+\end{figure}
+
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/fatal_clamping_cases.pdf}
+  \caption{\small%
+    \textbf{Fatal-aware masking with one-sided clamping on two illustrative rollout groups.}
+    Each panel shows a group of $G{=}16$ rollouts (non-fatal in blue, fatal in brick red) together with a cartoon of the resulting token-level update on one representative fatal trajectory $\tau_i$. Bar outlines mark fatal rollouts whose pre-clamp score $\widetilde{r}_i$ exceeds the group mean $\bar{r}$ (green, preserved) or falls below it (dark grey, clamped).
+    \textbf{(a) Higher-difficulty prompt.} When $\bar{r}$ is low, several fatal prefixes already beat it: $\widetilde{r}_i > 0$ and $\hat{A}_i = \widetilde{r}_i$, so gradients flow only through the viable prefix (tokens up to the fatal onset $f_i$) while the post-failure suffix is hard-masked---the partial reasoning that reached the failure point is \emph{reinforced} even though the trajectory itself is unsolvable.
+    \textbf{(b) Lower-difficulty prompt.} When most rollouts succeed, every fatal reward falls far below $\bar{r}$ and one-sided clamping sets $\hat{A}_i = \max(\widetilde{r}_i,0) = 0$, degenerating to pure hard-masking and avoiding any suppression of the possibly-valid prefix.%
+  }
+  \label{fig:fatal-clamping-cases}
+\end{figure}
+
+\paragraph{Empirical Visualization of the Two Cases.}
+Figure~\ref{fig:fatal-clamping-cases} visualizes how $\hat{A}_i = \max(\widetilde{r}_i, 0)$ interacts with per-group difficulty on two representative rollout groups. In the higher-difficulty case, most fatal trajectories still emit a coherent prefix before hitting a tool error; a fraction of them beat the group mean and contribute a positive gradient to the prefix tokens only. In the lower-difficulty case, every fatal trajectory is dominated by the successful non-fatal rollouts, and clamping to zero prevents a noisy negative signal from pushing the policy \emph{away} from what may actually be a valid prefix.
+Figure~\ref{fig:fatal-clamping-aggregate} shows that this split is not anecdotal: aggregated over $10{,}000$ groups, the vast majority of fatal trajectories sit on the negative side of the pre-clamp score and are safely zeroed out, while the small preserved tail is distributionally close to the right mode of the non-fatal reference. One-sided clamping thus recovers a principled credit signal from failed tool-call trajectories without amplifying their inherent noise.
+

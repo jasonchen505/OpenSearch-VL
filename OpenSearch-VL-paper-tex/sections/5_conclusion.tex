@@ -1,0 +1,12 @@
+\vspace{-0.1cm}
+\section{Conclusion}
+\label{sec:conclusion}
+\vspace{-0.1cm}
+
+We present \textbf{OpenSearch-VL}, a fully open recipe for training multimodal deep search agents with agentic reinforcement learning. Our recipe combines a Wikipedia-based data curation pipeline that mitigates one-step retrieval shortcuts and produces two high-quality datasets: \emph{SearchVL-SFT-36k} \& \emph{SearchVL-RL-8k}; a diverse tool environment spanning retrieval, image enhancement, and attention-and-parsing tools; and a multi-turn fatal-aware GRPO algorithm that preserves useful pre-failure reasoning through one-sided advantage clamping. Based on this recipe, OpenSearch-VL achieves over 10-point average gains across seven multimodal deep search benchmarks, with competitive performance on representative tasks such as VDR compared with strong proprietary reasoning models. We will release our data, code, models, and training recipe, with the aim to lower the reproducibility barrier and provide an open foundation for future research on multimodal deep search agents.
+
+\section*{Limitations and Future Work}
+\label{apdx:limitations}
+
+A non-trivial fraction of training instability traces to the external tool environment $\mathcal{E}$---including search ranking drift, fetch failures, and occasional summarization hallucinations in \textsc{TextSearch} and \textsc{ImageSearch}---which inflates reward variance and motivates future work on on-policy reliability estimation. Furthermore, our composite reward (Eq.~\ref{eq:reward}) relies on proprietary GPT-4o judges, which are costly, version-dependent, and currently score only textual queries while ignoring intermediate visual operations (e.g., \textsc{Crop}); replacing these with open process reward models covering the full visual action space $\mathcal{T}_v$ remains a natural next step. Finally, exact numerical reproducibility is challenged by the reliance on these externally hosted APIs (e.g., Serper, PaddleX \textsc{OCR}) and the prohibitive cost of reporting multi-seed error bars for large-scale evaluations (Table~\ref{tab:search-qa-main}). To mitigate these constraints and support open research, we will release our complete datasets (SearchVL-SFT-36k / SearchVL-RL-8k), model checkpoints, and training code under permissive licenses.
+

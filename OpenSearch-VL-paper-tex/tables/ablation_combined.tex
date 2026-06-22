@@ -1,0 +1,44 @@
+\providecommand{\dup}[1]{\textcolor{red!75!black}{(+#1)}}
+\providecommand{\ddn}[1]{\textcolor{green!55!black}{(-#1)}}
+
+\begin{table}[H]
+    \setlength{\abovecaptionskip}{2pt}
+    \setlength{\belowcaptionskip}{3pt}
+    \caption{\textbf{Ablation studies on the SFT data pipeline and RL training recipe.} Deltas in the top panel are measured relative to the full pipeline; deltas in the bottom panel are measured relative to Vanilla GRPO~\citep{jin2025searchr1trainingllmsreason}.}
+    \label{tab:data-pipeline-ablation}
+    \label{tab:training-recipe-ablation}
+    \centering
+    \scriptsize
+    \setlength{\tabcolsep}{4.5pt}
+    \renewcommand{\arraystretch}{0.92}
+    \textbf{(a) SFT data pipeline ablation}\\[-0.2em]
+    \begin{tabularx}{0.85\linewidth}{l CCCC}
+    \toprule
+    \textbf{Settings} & SimpleVQA & InfoSeek & FVQA & \textbf{Avg.} \\
+    \midrule
+    \rowcolor{purple!15}
+    Full pipeline \textbf{(Ours)}      & \textbf{66.1}            & \textbf{62.4}            & \textbf{65.3}             & \textbf{64.6} \\
+    \quad w/o source-anchor grounding  & 53.6\ddn{12.5}           & 54.5\ddn{7.9}            & 51.2\ddn{14.1}            & 53.1\ddn{11.5} \\
+    \quad w/o fuzzy entity rewriting   & 51.7\ddn{14.4}           & 56.4\ddn{6.0}            & 54.7\ddn{10.6}            & 54.3\ddn{10.3} \\
+    \quad w/o staged filtering         & 57.6\ddn{8.5}            & 55.2\ddn{7.2}            & 56.3\ddn{9.0}             & 56.4\ddn{8.2}  \\
+    \quad w/o enhancement subset       & 64.9\ddn{1.2}            & 61.7\ddn{0.7}            & 63.2\ddn{2.1}             & 63.3\ddn{1.3}  \\
+    \bottomrule
+    \end{tabularx}
+
+    \vspace{0.35em}
+    \textbf{(b) RL recipe ablation}\\[-0.2em]
+    \begin{tabularx}{0.85\linewidth}{l CCCC}
+    \toprule
+    \textbf{Method} & SimpleVQA & InfoSeek & FVQA & \textbf{Avg.} \\
+    \midrule
+    Qwen3-VL-8B                                             & 52.0 & 50.3 & 58.7 & 53.7 \\
+    \midrule
+    Qwen3-VL-8B + SFT only                                  & 66.1 & 62.4 & 65.3 & 64.6 \\
+    \quad + Vanilla GRPO                                    & 68.8 & 66.5 & 67.4 & 67.6 \\
+    \quad + GRPO w/ Hard Masking                            & 68.3\ddn{0.5} & 67.9\dup{1.4} & 66.9\ddn{0.5} & 67.7\dup{0.1} \\
+    \quad + GRPO w/ Fatal Masking only                      & 69.7\dup{0.9} & 68.3\dup{1.8} & 69.2\dup{1.8} & 69.1\dup{1.5} \\
+    \rowcolor{purple!15}
+    \quad + Fatal Masking + One-sided Clamp \textbf{(Ours)} & \textbf{71.6}\dup{2.8} & \textbf{72.4}\dup{5.9} & \textbf{71.5}\dup{4.1} & \textbf{71.8}\dup{4.2} \\
+    \bottomrule
+    \end{tabularx}
+\end{table}

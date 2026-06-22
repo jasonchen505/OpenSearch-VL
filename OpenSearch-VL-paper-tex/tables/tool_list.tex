@@ -1,0 +1,22 @@
+\begin{table}[H]
+\centering
+\vspace{-5pt}
+\caption{The search-oriented tool suite integrated within \textbf{OpenSearch-VL}. The suite spans three complementary functions---\emph{retrieval} for acquiring external information, \emph{image enhancement} for improving low-quality visual inputs, and \emph{attention \& parsing} for focusing on and extracting content from specific regions. Detailed specifications of each tool are provided in Appendix~\ref{apdx:tool-definition}.}
+\renewcommand{\arraystretch}{1.15}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llll}
+\toprule
+\textbf{Tool} & \textbf{Description} & \textbf{Arguments} & \textbf{Tool Output} \\
+\midrule
+\textsc{TextSearch}          & Web search with page reading and LLM summarization     & Query + TopK           & Query-focused passage summaries \\
+\textsc{ImageSearch}         & Reverse image / visual entity search over the web      & Image + TopK           & Visual matches and related webpages \\
+\textsc{Sharpen}             & Unsharp-masking based deblurring / detail enhancement  & Image + Amount         & Sharpened image \\
+\textsc{SuperResolution}     & Deep super-resolution (EDSR) for low-resolution inputs & Image + Scale          & High-resolution image \\
+\textsc{PerspectiveCorrect}  & Auto perspective rectification of skewed documents     & Image                  & Fronto-parallel image \\
+\textsc{Crop}                & Extract a user-specified rectangular region            & Image + Coordinates    & Cropped image \\
+\textsc{OCR}                 & Structured document parsing with text and layout labels & Image + Flags         & Text blocks with labels and reading order \\
+\bottomrule
+\end{tabular}}
+\label{tab:search-tools}
+\vspace{-5pt}
+\end{table}

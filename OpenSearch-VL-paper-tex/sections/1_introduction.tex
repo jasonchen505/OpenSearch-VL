@@ -1,0 +1,44 @@
+\section{Introduction}
+\label{sec:introduction}
+
+
+Multimodal deep search has emerged as a critical direction for multimodal large language models (MLLMs), enabling them to evolve from passive visual understanding systems into agents that actively search evidence, verify facts, and reason over knowledge-intensive visual queries \citep{huang2026vision,feng2026gen,chen2026unify}.
+However, frontier multimodal search agents remain difficult to reproduce, as their training data, code are often proprietary or insufficiently disclosed \citep{seed2.0,huang2026vision,singh2025openai, kimiteam2026kimik25visualagentic}. As a result, the community still lacks a fully open recipe for building, analyzing, and improving strong multimodal search agents.
+
+Among these missing components, high-quality training data is a central bottleneck. The strongest frontier systems are still largely dominated by well-funded commercial corporations \citep{Claude_4,comanici2025gemini}, where the data sources, filtering criteria, expert demonstrations, and tool-use trajectories are typically kept private. 
+This makes it difficult to reproduce advanced multimodal search capabilities or systematically study which data properties are essential for agentic search behavior.
+The issue is even more pronounced in multimodal settings, where effective training data must capture image-grounded understanding, multi-hop retrieval, evidence verification, and long-horizon tool use rather than simple visual question answering. 
+Therefore, releasing high-quality training data is crucial for making frontier multimodal search agent research more transparent, reproducible, and accessible.
+
+Beyond data, training multimodal search agents also poses unique challenges, especially when applying agentic reinforcement learning (agentic RL) \citep{fan2026exploring,webwatcher,huang2026vision} to long-horizon tool-use settings. 
+Agentic search trajectories involve multiple rounds of reasoning, tool invocation, and observation integration, where a single malformed call, timeout, irrelevant query, or repeated failure can invalidate the remaining rollout. 
+Simply discarding such trajectories wastes useful pre-failure reasoning, while training on the full rollout introduces noisy gradients from meaningless post-failure tokens. 
+Another practical challenge is that real-world visual inputs are often imperfect, such as blurred photos, low-resolution thumbnails, skewed documents, and crowded screenshots. 
+In these cases, searching alone is insufficient, and the agent must first crop, enhance, rectify, or parse the visual evidence before reliable search can begin. 
+However, most existing multimodal search agents focus mainly on retrieval and do not jointly address robust visual pre-processing and failure-aware long-horizon RL.
+
+In this work, we introduce \textbf{OpenSearch-VL}, a fully open recipe for training frontier multimodal deep search agents with agentic RL. 
+Our recipe addresses the above challenges from data, tools, and training. 
+First, we develop a dedicated data curation pipeline to build high-quality training data. 
+Starting from the Wikipedia hyperlink graph, we sample multi-hop entity paths and convert them into multi-hop VQA instances by rewriting intermediate entities into fuzzy descriptions, followed by a carefully designed filtering mechanism.
+This design avoids single-hop image lookup shortcuts and encourages the agent to learn multi-hop search and reasoning behaviors.
+This pipeline yields two training datasets \textbf{SearchVL-SFT-36k} for SFT and \textbf{SearchVL-RL-8k} for agentic RL.
+Second, we build a tool environment that goes beyond retrieval-only multimodal agent. 
+In addition to search, the agent is equipped with OCR, cropping, sharpening, super-resolution, and perspective correction, allowing it to handle imperfect visual inputs in real-world scenarios before querying external knowledge. 
+Finally, we develop an agentic RL algorithm based on GRPO ~\citep{guo2025deepseek} for long-horizon multimodal tool use, where multi-step interactions often lead to cascading tool failures. To address this issue, we introduce fatal-aware token masking that removes invalid post-failure suffixes from optimization, while preserving useful pre-failure reasoning through one-sided advantage clamping. This enables the model to learn from partially successful trajectories without being affected by noisy gradients from failed rollouts.
+Together, these designs enable OpenSearch-VL to learn robust long-horizon search behavior over multimodal evidence in real-world scenarios.
+
+
+Experiments across multimodal deep search benchmarks show that OpenSearch-VL consistently improves over strong baselines. 
+For example, compared with the Qwen3-VL-30B-A3B \citep{Qwen3-VL} agentic baseline, our model improves the average score from 47.8 to 61.6, with large gains on VDR (+13.3) \citep{vdr}, MMSearch (+24.5) \citep{mmsearch}, FVQA (+10.2) \citep{wang2017fvqa}, and InfoSeek (+16.2) \citep{chen2023can}. 
+Moreover, OpenSearch-VL achieves comparable or even better performance than proprietary commercial models on several benchmarks.
+In summary, our main contributions can be summarized as follows:
+
+\begin{itemize}[leftmargin=*, noitemsep]
+    \item We introduce \textbf{OpenSearch-VL}, a fully open recipe for training frontier multimodal deep search agents. 
+    We will release the training data, code, and models to provide an open foundation for reproducible research on multimodal agentic search.
+    \item We build the key components required for training advanced multimodal search agents, including high-quality image-grounded multi-hop training data, a diverse tool environment, and a multi-turn fatal-aware GRPO algorithm. 
+    \item Extensive experiments demonstrate the effectiveness of our recipe. For example, our trained OpenSearch-VL-30B-A3B brings an average improvement of 13.8 points across 7 multimodal deep search benchmarks.
+\end{itemize}
+
+\vspace{-0.1in}

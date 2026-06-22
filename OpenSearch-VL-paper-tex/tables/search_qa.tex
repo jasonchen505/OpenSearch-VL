@@ -1,0 +1,60 @@
+\begin{table}[!t]
+    \setlength{\abovecaptionskip}{2pt}
+    \setlength{\belowcaptionskip}{2pt}
+    \caption{
+    Performance on multimodal knowledge-intensive QA and web-search benchmarks.
+    \textbf{Bold} and \underline{underline} mark the best and second-best score in each column.
+    }
+    \centering
+    \footnotesize
+    \setlength{\tabcolsep}{4.5pt}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l ccccccc c}
+    \toprule
+    \textbf{Model} & SimpleVQA & VDR & MMSearch & LiveVQA & BrowseComp-VL & FVQA & InfoSeek & \textbf{Avg} \\
+    \midrule
+    \rowcolor{blue!5}
+    \multicolumn{9}{c}{\textbf{Direct Reasoning}} \\
+    GPT-4o ~\citep{openai2024gpt4ocard}           & 51.7 & 1.7  & 18.7 & 28.1 & 5.5  & 48.0 & 52.9 & 29.5 \\
+    GPT-5 ~\citep{GPT-5}            & \underline{61.6} & \textbf{9.8}  & \underline{35.1} & 44.4 & \textbf{48.6} & \underline{54.4} & \textbf{61.7} & \underline{45.1} \\
+    Gemini-2.5-Flash~\citep{comanici2025gemini}  & 57.9 & 6.2  & 30.4 & \underline{51.0} & 37.1 & 47.7 & 44.1   & 39.2 \\
+    Gemini-2.5-Pro~\citep{comanici2025gemini}    & \textbf{63.0} & \underline{8.0}  & \textbf{39.8} & \textbf{60.3} & \underline{43.1} & \textbf{60.7} & 46.9   & \textbf{46.0} \\
+    Claude-4-Sonnet~\citep{Claude_4}   & 50.9 & 2.0  & 18.7 & 38.5 & 29.3 & 35.3 & \underline{57.3}   & 33.1 \\
+    Claude-3.7-Sonnet~\citep{Claude_37} & 42.7 & 4.6  & 21.1 & 38.0 & 32.3 & 36.7 &  54.8   & 32.9 \\
+    Qwen3-VL-8B ~\citep{Qwen3-VL} & 47.1 & 2.8  & 11.7 & 23.1 & 24.1 & 24.2 & 23.1 & 22.3 \\
+    Qwen3-VL-30B-A3B ~\citep{Qwen3-VL} & 53.2   & 3.8  & 18.7 & 42.7 & 29.6 & 34.7 & 26.4 & 29.9 \\
+    Qwen3-VL-32B ~\citep{Qwen3-VL} & 58.0 & 4.1   & 19.8 & 45.5 & 30.8 & 34.1 & 28.8 & 31.6 \\
+    \midrule
+    \rowcolor{blue!5}
+    \multicolumn{9}{c}{\textbf{RAG Workflow}} \\
+    GPT-4o ~\citep{openai2024gpt4ocard} & \textbf{63.6} & 4.5  & \underline{49.1} & \underline{40.1} & 13.4 & \textbf{66.3} & 59.5 & \underline{42.4} \\
+    GPT-5  ~\citep{GPT-5} & 55.9 & \textbf{22.3}   & \textbf{52.6} & \textbf{56.0} & \textbf{54.9} & \underline{62.6} & \textbf{70.6} & \textbf{53.6} \\
+    Claude-3.7-Sonnet~\citep{Claude_37} & 59.3 & \underline{11.3}   & 32.7 & 30.3 & 10.0 & 59.1   & \underline{60.2}   & 37.6 \\
+    Qwen3-VL-8B ~\citep{Qwen3-VL}       & \underline{62.3} & 7.3   & 47.3 & 39.3 & \underline{29.3} & 53.6 & 46.1 & 40.7 \\
+    \midrule
+    \rowcolor{blue!5}
+    \multicolumn{9}{c}{\textbf{Agentic Workflow}} \\
+    DeepMMSearch-R1-7B ~\citep{deepmmsearch-r1} & 55.8 & --   & --   & --   & --   & --   & 47.5 & -- \\
+    Visual-ARFT-7B ~\citep{liu2025visualarft}                   & 42.4 & 3.3   & 34.5 & 25.4 & 16.5 & 41.7 & 37.9 & 28.8 \\
+    MMSearch-R1-7B\citep{mmsearch-r1} & 57.4 & 2.9   & 53.8 & 48.4 & 20.9 & 58.4 & 55.1 & 42.4 \\
+    DeepEyes-v2-7B~\citep{deepeyesv2} & 59.4 & 7.8   & 63.7 & --   & --   & 60.6 & 51.1 & -- \\
+    WebWatcher-7B~\citep{webwatcher}  & 54.3 & 10.3   & 49.1 & 51.2 & 21.2 & --   & --   & -- \\
+    Qwen3-VL-8B~\citep{Qwen3-VL}  & 52.0 & 17.0 & 37.4 & 50.6 & 27.9 & 58.7 & 50.3 & 42.0 \\
+    SenseNova-MARS-8B~\citep{chng2025sensenova} & \underline{61.7} & \underline{19.4}   & \textbf{67.4} & \underline{56.2} & \underline{35.1} & \underline{67.1} & \underline{61.7} & \underline{52.7} \\
+    \rowcolor{purple!15}
+    \textbf{OpenSearch-VL-8B(Ours)}         & \textbf{71.6}   & \textbf{20.8}   & \underline{64.5}   & \textbf{59.6}   & \textbf{37.6}   & \textbf{71.5}   & \textbf{70.2}   & \textbf{56.6} \\
+    \midrule
+    Qwen3-VL-30B-A3B~\citep{Qwen3-VL} & \underline{55.1}   & \underline{20.2} & \underline{44.2} & \underline{62.0} & \underline{34.1} & \underline{63.0} & \underline{56.2}   & \underline{47.8} \\
+    \rowcolor{purple!15}
+    \textbf{OpenSearch-VL-30B-A3B(Ours)}    & \textbf{74.9}   & \textbf{33.5}   & \textbf{68.7}   & \textbf{67.4}   & \textbf{41.1}   & \textbf{73.2}   & \textbf{72.4}   & \textbf{61.6} \\
+    \midrule
+    Qwen3-VL-32B~\citep{Qwen3-VL} & 58.7 & \underline{23.1}  & 53.9 & 45.5 & \underline{35.1} & \underline{61.2} & \underline{58.5} & \underline{48.0} \\
+    WebWatcher-32B~\cite{webwatcher} & \underline{59.0} & --   & \underline{55.3} & \underline{58.7} & 27.0 & --   & --   & -- \\
+    \rowcolor{purple!15}
+    \textbf{OpenSearch-VL-32B(Ours)}        &  \textbf{76.2}  & \textbf{33.8}   & \textbf{72.3}   & \textbf{70.5}   & \textbf{43.8}   & \textbf{74.7}   & \textbf{74.8}   & \textbf{63.7} \\
+    \bottomrule
+    \end{tabular}
+    }
+    \label{tab:search-qa-main}
+    \vspace{0.6cm}
+\end{table}

@@ -1,0 +1,240 @@
+\documentclass[10pt]{article}
+
+\pdfobjcompresslevel=0
+
+\PassOptionsToPackage{table}{xcolor}
+
+\usepackage{scai}
+
+\definecolor{promptblue}{HTML}{2B5B9E}
+\definecolor{prompttea}{HTML}{1F7A6F}
+\definecolor{promptplum}{HTML}{8A5CD6}
+\definecolor{promptamber}{HTML}{B45A1C}
+\definecolor{promptolive}{HTML}{556B2F}
+\definecolor{citepink}{HTML}{E63E91}
+
+\hypersetup{
+  colorlinks=true,
+  citecolor=promptblue,
+  linkcolor=promptplum,
+  urlcolor=citepink,
+}
+
+\usepackage[authoryear, sort&compress, round]{natbib}
+
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+\usepackage{amsthm}
+\newtheorem{proposition}{Proposition}
+\usepackage{nicefrac}
+\usepackage{placeins}
+\usepackage{wrapfig}
+\usepackage{listings}
+\usepackage{float}
+
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.9}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.85}
+\setcounter{topnumber}{4}
+\setcounter{bottomnumber}{4}
+\setcounter{totalnumber}{8}
+
+\makeatletter
+\g@addto@macro\normalsize{%
+  \setlength{\abovedisplayskip}{3pt plus 1pt minus 1pt}%
+  \setlength{\abovedisplayshortskip}{0pt plus 1pt}%
+  \setlength{\belowdisplayskip}{3pt plus 1pt minus 1pt}%
+  \setlength{\belowdisplayshortskip}{2pt plus 1pt minus 1pt}%
+}
+\g@addto@macro\small{%
+  \setlength{\abovedisplayskip}{2pt plus 1pt minus 1pt}%
+  \setlength{\abovedisplayshortskip}{0pt plus 1pt}%
+  \setlength{\belowdisplayskip}{2pt plus 1pt minus 1pt}%
+  \setlength{\belowdisplayshortskip}{1pt plus 1pt minus 1pt}%
+}
+\makeatother
+\normalsize
+
+\tcbuselibrary{listings}
+
+\titlecontents{section}
+  [1.6em]
+  {\addvspace{6pt}\bfseries}
+  {\contentslabel[\thecontentslabel]{1.6em}}
+  {\hspace*{-1.6em}}
+  {\hfill\contentspage}
+\titlecontents{subsection}
+  [4em]
+  {\addvspace{2pt}\normalfont\small}
+  {\contentslabel[\thecontentslabel]{2.4em}}
+  {\hspace*{-2.4em}}
+  {\titlerule*[6pt]{.}\contentspage}
+
+\newtcolorbox{promptbox}[2][promptblue]{
+  enhanced,
+  colback=#1!4!white,
+  colframe=#1!80!black,
+  colbacktitle=#1!85!black,
+  coltitle=white,
+  fonttitle=\bfseries\small,
+  title={#2},
+  boxrule=0.6pt,
+  titlerule=0pt,
+  arc=3pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fontupper=\small,
+}
+
+\lstdefinestyle{jsontool}{
+  basicstyle=\scriptsize\ttfamily,
+  breaklines=true,
+  breakatwhitespace=true,
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  stringstyle=\color{promptplum!85!black},
+  keywordstyle=\color{promptblue!85!black}\bfseries,
+  commentstyle=\color{gray!70!black}\itshape,
+  morestring=[b]",
+  morecomment=[l]{//},
+  morekeywords={true,false,null},
+  literate={:}{{\textcolor{black}{:}}}1,
+}
+
+\newtcblisting{toolsjson}[2][promptolive]{
+  enhanced,
+  colback=#1!4!white,
+  colframe=#1!80!black,
+  colbacktitle=#1!85!black,
+  coltitle=white,
+  fonttitle=\bfseries\small,
+  title={#2},
+  boxrule=0.6pt,
+  titlerule=0pt,
+  arc=3pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  listing only,
+  listing options={style=jsontool},
+}
+
+\renewcommand{\authorfont}{\normalsize\rmfamily}
+
+\makeatletter
+\renewcommand{\scaiauthor}[2]{%
+  \stepcounter{scai@numauthors}%
+  \ifnum\value{scai@numauthors}=1
+    \gdef\@scai@authorlist{\mbox{\textbf{#2}\textsuperscript{\@scai@rendertags{#1}}}}%
+  \else
+    \g@addto@macro\@scai@authorlist{, \mbox{\textbf{#2}\textsuperscript{\@scai@rendertags{#1}}}}%
+  \fi
+}
+
+\renewcommand{\@scai@renderaffils}{%
+  \begingroup
+  \normalsize
+  \def\@scai@affilfirst{1}%
+  \@for\@scai@tmp:=\@scai@affillist\do{%
+    \ifnum\@scai@tmp=3\relax \par\def\@scai@affilfirst{1}\fi
+    \if\@scai@affilfirst 1\def\@scai@affilfirst{0}\else ,\space\fi
+    \textsuperscript{\@scai@tmp}%
+    \csname @scai@affil@\@scai@tmp\endcsname
+  }%
+  \par
+  \endgroup
+}
+\makeatother
+
+\makeatletter
+\newcommand{\authorbreak}{%
+  \g@addto@macro\@scai@authorlist{\\}%
+  \let\@scai@authorsaved\scaiauthor
+  \def\scaiauthor##1##2{%
+    \stepcounter{scai@numauthors}%
+    \g@addto@macro\@scai@authorlist{\mbox{\textbf{##2}\textsuperscript{\@scai@rendertags{##1}}}}%
+    \let\scaiauthor\@scai@authorsaved
+  }%
+}
+\makeatother
+
+\makeatletter
+\renewcommand{\maketitle}{%
+  \bgroup
+  \setlength{\parindent}{0pt}%
+  \setlength{\parskip}{0pt}%
+  \vspace*{3pt}%
+  {\centering\titlefont\@title\par}%
+  \vspace{14pt}%
+  {\centering\authorfont\@scai@authorlist\par}%
+  \vspace{8pt}%
+  {\centering\@scai@renderaffils\par}%
+  \if@scai@haskeywords
+    \vspace{6pt}%
+    {\centering\keywordsfont{\sffamily\textbf{Keywords:}} \@scai@keywords\par}%
+  \fi
+  \vspace{10pt}%
+  \@scai@renderabstract
+  \egroup
+  \thispagestyle{scaifirstpage}%
+}
+\makeatother
+
+\title{OpenSearch-VL: An Open Recipe for Frontier\\Multimodal Search Agents}
+
+\contribnote{corr}{$\dagger$}{Corresponding author.}
+
+\scaiauthor{1,2}{Shawn Chen}
+\scaiauthor{3}{Kaituo Feng}
+\scaiauthor{1}{Hangting Chen}
+\scaiauthor{3}{Wenxuan Huang}
+\scaiauthor{3}{Dasen Dai}
+\scaiauthor{2,4}{Quanxin Shou}
+\authorbreak
+\scaiauthor{3}{Yunlong Lin}
+\scaiauthor{3}{Xiangyu Yue}
+\scaiauthor{4}{Shenghua Gao}
+\scaiauthor{1,corr}{Tianyu Pang}
+
+\affiliation{1}{Tencent Hunyuan}
+\affiliation{2}{University of California, Los Angeles}
+\affiliation{3}{The Chinese University of Hong Kong}
+\affiliation{4}{The University of Hong Kong}
+
+\metadata[\raisebox{-0.35ex}{\includegraphics[height=1.3em]{logo/github-logo.pdf}}\,Home]{\url{https://github.com/shawn0728/OpenSearch-VL}}
+\metadata[\raisebox{-0.35ex}{\includegraphics[height=1.3em]{logo/hf-logo.pdf}}\,Huggingface]{\url{https://huggingface.co/OpenSearch-VL}}
+
+\input{sections/0_abstract}
+
+\begin{document}
+
+\maketitle
+
+
+
+\input{sections/1_introduction}
+\input{sections/2_method}
+\input{sections/3_experiments}
+\input{sections/4_related_works}
+\input{sections/5_conclusion}
+
+\clearpage
+
+{
+    \bibliographystyle{plainnat}
+    \bibliography{ref}
+}
+
+\newpage
+
+\appendix
+
+\input{sections/X_Appendix}
+
+\clearpage
+\newpage
+
+
+
+\end{document}

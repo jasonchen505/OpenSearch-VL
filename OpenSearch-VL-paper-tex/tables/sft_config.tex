@@ -1,0 +1,56 @@
+\begin{table}[!tbp]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.1}
+\setlength{\abovecaptionskip}{14pt}
+\begin{tabular}{@{}l l p{0.42\textwidth}@{}}
+\toprule
+\textbf{Category} & \textbf{Hyperparameter} & \textbf{Value / Setting} \\
+\midrule
+\multirow{4}{*}{\textbf{Model}}
+& Base Model & Qwen3-VL-8B-Instruct (32B, 30B-A3B) \\
+& Image Max Pixels & $262{,}144$ ($\approx 512 \times 512$) \\
+& Video Max Pixels & $16{,}384$ ($\approx 128 \times 128$) \\
+& Trust Remote Code & True \\
+\midrule
+\multirow{5}{*}{\textbf{Method}}
+& Finetuning Type & Full \\
+& Vision Tower Frozen & False \\
+& MM Projector Frozen & False \\
+& DeepSpeed Stage & ZeRO-3 \\
+& Mixed Precision & bfloat16 \\
+\midrule
+\multirow{5}{*}{\textbf{Dataset}}
+& Total Samples & 36592 \\
+& Template & \texttt{qwen3\_vl} \\
+& Cutoff Length & $32{,}000$ tokens \\
+& Preprocessing Workers & 16 \\
+& Dataloader Workers & 4 \\
+\midrule
+\multirow{8}{*}{\textbf{Training}}
+& Batch Size per Device & 1 \\
+& Gradient Accumulation Steps & 1 \\
+& Effective Batch Size & 256 ($= 1 \times 1 \times 256~\text{GPUs}$) \\
+& Gradient Checkpointing & True \\
+& Learning Rate & $2.0 \times 10^{-5}$ \\
+& Epochs & 8 \\
+& LR Scheduler & cosine \\
+& Warmup Ratio & 0.1 \\
+\midrule
+\multirow{4}{*}{\textbf{Infrastructure}}
+& Total GPUs & 256 (32 nodes $\times$ 8) \\
+& Orchestration & Ray + DeepSpeed ZeRO-3 \\
+& Placement Strategy & PACK \\
+& Resources per Worker & 1 GPU \\
+\midrule
+\multirow{4}{*}{\textbf{Logging / I\,O}}
+& Logging Steps & 5 \\
+& Checkpoint Save Steps & 400 \\
+& Plot Loss & True \\
+& Report Backend & TensorBoard \\
+\bottomrule
+\end{tabular}
+\caption{Agentic SFT training configuration and hyperparameters for \textsc{OpenSearch-VL}. All three model sizes (8B dense, 32B dense, 30B-A3B MoE) use the identical recipe; only the \emph{Base Model} row differs at launch time. Hyperparameters not exercised in our pipeline---e.g.\ held-out evaluation split, LoRA/adapter settings, or layer-freezing schedules---are omitted.}
+\label{tab:sft-config}
+\end{table}

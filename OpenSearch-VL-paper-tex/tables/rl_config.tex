@@ -1,0 +1,77 @@
+\begin{table}[!tbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.1}
+\setlength{\abovecaptionskip}{14pt}
+\begin{tabular}{@{}l l c c@{}}
+\toprule
+\textbf{Category} & \textbf{Hyperparameter} & \textbf{8B (dense)} & \textbf{30B-A3B (MoE)} \\
+\midrule
+\multirow{2}{*}{\textbf{Model}}
+& Base Model & \texttt{Qwen3-VL-8B-Instruct} & \texttt{Qwen3-VL-30B-A3B-Instruct} \\
+& Training Dtype & \multicolumn{2}{c}{bfloat16} \\
+\midrule
+\multirow{5}{*}{\textbf{Data}}
+& Train Batch Size (prompts) & \multicolumn{2}{c}{256} \\
+& Val Batch Size & 64 & 512 \\
+& Max Prompt Length & \multicolumn{2}{c}{$4{,}096$ tokens} \\
+& Max Response Length & \multicolumn{2}{c}{$70{,}000$ tokens} \\
+& Data Seed & \multicolumn{2}{c}{3407} \\
+\midrule
+\multirow{7}{*}{\textbf{Rollout}}
+& Engine & \multicolumn{2}{c}{SGLang (async mode)} \\
+& Rollout Tensor Parallel & \multicolumn{2}{c}{4} \\
+& \# Samples per Prompt ($n$) & 8 & 16 \\
+& GPU Mem.\ Utilization & 0.85 & 0.65 \\
+& Train / Val Temperature & \multicolumn{2}{c}{0.7 / 0.7} \\
+& Train / Val Top-$p$ & \multicolumn{2}{c}{1.0 / 0.95} \\
+& Top-$k$ & \multicolumn{2}{c}{$-1$ (disabled)} \\
+\midrule
+\multirow{11}{*}{\textbf{Policy (Actor)}}
+& Strategy & \multicolumn{2}{c}{Megatron-LM} \\
+& Tensor Parallel (TP) & \multicolumn{2}{c}{4} \\
+& Pipeline Parallel (PP) & \multicolumn{2}{c}{2} \\
+& Context Parallel (CP) & 8 & 4 \\
+& Expert Parallel / ETP & --- & 8 / 1 \\
+& PPO Mini-batch Size & 64 & 128 \\
+& PPO Max Token Len / GPU & $74{,}576$ & $74{,}596$ \\
+& Micro-batch Size / GPU & \multicolumn{2}{c}{1} \\
+& Dynamic Batch Size & \multicolumn{2}{c}{True} \\
+& Param / Optim / Grad Offload & \multicolumn{2}{c}{CPU} \\
+& Gradient Checkpointing & \multicolumn{2}{c}{Full recompute, uniform (1 layer)} \\
+\midrule
+\multirow{6}{*}{\textbf{Optim.\ / Loss}}
+& Actor LR & \multicolumn{2}{c}{$1\times 10^{-6}$} \\
+& PPO Clip Ratio (high) & \multicolumn{2}{c}{0.28} \\
+& Entropy Coefficient & \multicolumn{2}{c}{0.0} \\
+& Use KL Loss & \multicolumn{2}{c}{False} \\
+& KL Loss / Controller Coef & \multicolumn{2}{c}{$1{\times}10^{-3}$ / $1{\times}10^{-3}$} \\
+& Loss Aggregation & \multicolumn{2}{c}{\texttt{seq-mean-token-sum}} \\
+\midrule
+\multirow{3}{*}{\textbf{Algorithm}}
+& Advantage Estimator & \multicolumn{2}{c}{RLOO (within GRPO objective)} \\
+& KL Type & \multicolumn{2}{c}{low-variance KL} \\
+& Fatal-aware Masking & \multicolumn{2}{c}{True (unknown + error)} \\
+\midrule
+\multirow{3}{*}{\textbf{Tool-Agent}}
+& \# Parallel Tasks & \multicolumn{2}{c}{256} \\
+& \# Parallel Tool Calls & \multicolumn{2}{c}{$2{,}048$} \\
+& Stepwise Advantage & \multicolumn{2}{c}{False} \\
+\midrule
+\multirow{4}{*}{\textbf{Trainer}}
+& Cluster & \multicolumn{2}{c}{8 nodes $\times$ 8 GPUs = 64 GPUs} \\
+& Save / Test Freq (steps) & 50 / 10 & 1 / 10 \\
+& Total Epochs & 100 & 5 \\
+& Critic Warmup & \multicolumn{2}{c}{0 (critic-free)} \\
+\midrule
+\multirow{4}{*}{\parbox{1.6cm}{\raggedright\textbf{MoE-only\\(30B-A3B)}}}
+& Router Dtype & --- & fp32 \\
+& Auxiliary-Loss Coef & --- & 0.01 \\
+& Router Z-loss Coef & --- & $1{\times}10^{-3}$ \\
+& Permute Fusion & --- & True \\
+\bottomrule
+\end{tabular}
+\caption{Key RL training hyperparameters for the multi-turn fatal-aware GRPO stage of \textsc{OpenSearch-VL}. The 8B dense run and the 30B-A3B MoE run share the same algorithm template and rollout/actor stack; values that differ between the two (response budget per prompt, mini-batch size, context/expert parallelism, MoE-specific routing coefficients, save cadence and total epochs) are shown side-by-side. Entries marked ``---'' are not applicable (e.g.\ no expert parallelism in the dense 8B model). Framework-default fields and cluster-network environment variables are omitted.}
+\label{tab:rl-config}
+\end{table}

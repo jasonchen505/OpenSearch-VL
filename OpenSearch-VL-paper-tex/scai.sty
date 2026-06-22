@@ -1,0 +1,521 @@
+%% scai.sty — UCLA ScAI Lab Paper Template
+%% Author: Yanqiao Zhu
+%% Version 1.1 (2026)
+%%
+%% Usage:
+%%   \usepackage{scai}
+%%
+%% Requires: pdfLaTeX with extarticle or article class
+%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{scai}[2026/02/15 v1.1 UCLA ScAI Lab Paper Template]
+
+%% Package options
+\newif\if@scai@final \@scai@finalfalse
+\DeclareOption{final}{\@scai@finaltrue}
+\ProcessOptions\relax
+
+%% ============================================================
+%% Required packages
+%% ============================================================
+\RequirePackage{xifthen}
+\RequirePackage{xparse}
+\RequirePackage{etoolbox}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[english]{babel}
+\RequirePackage{xurl}
+\RequirePackage{hyperref}
+\RequirePackage[dvipsnames]{xcolor}
+\RequirePackage{graphicx}
+\RequirePackage{fancyhdr}
+%% Note: we use \@startsection directly (like NeurIPS) instead of titlesec
+%% because \@startsection has built-in \nopagebreak after headings
+\RequirePackage{caption}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{enumitem}
+\RequirePackage{geometry}
+\RequirePackage{textcomp}
+\RequirePackage{colortbl}
+\RequirePackage{titletoc}
+\RequirePackage[toc,page,header]{appendix}
+\RequirePackage[tracking=smallcaps]{microtype}
+
+%% ============================================================
+%% Font setup
+%% ============================================================
+%% Body text: Times (via newtxtext)
+\RequirePackage{newtxtext}
+
+%% Sans-serif: Helvetica (closest to Arial in standard LaTeX)
+\RequirePackage[scaled=0.96]{helvet}
+
+%% Math: Computer Modern (default LaTeX math — CMU compatible)
+%% We intentionally do NOT load newtxmath to keep CM math fonts
+\RequirePackage{amsmath,amssymb,amsfonts}
+
+%% Monospace: Computer Modern Typewriter (CMU Typewriter)
+\renewcommand{\ttdefault}{cmtt}
+
+%% ============================================================
+%% Colors
+%% ============================================================
+\definecolor{uclablue}{HTML}{2774AE}        % UCLA Blue (primary)
+\definecolor{ucladarkblue}{HTML}{003B5C}     % UCLA Darker Blue
+\definecolor{uclalightblue}{HTML}{E6F2FA}    % Light blue for abstract bg
+\hypersetup{
+  colorlinks=true,
+  linkcolor=uclablue,
+  citecolor=uclablue,
+  urlcolor=uclablue,
+}
+
+%% ============================================================
+%% Page geometry — single column, US letter
+%% ============================================================
+\geometry{
+  left=2.5cm,
+  right=2.5cm,
+  top=2.25cm,
+  bottom=2.5cm,
+  headheight=40pt,
+  headsep=10pt,
+  footskip=30pt,
+  letterpaper,
+}
+\setlength{\columnsep}{15pt}
+
+%% Paragraph spacing
+\RequirePackage{parskip}
+
+%% ============================================================
+%% List spacing
+%% ============================================================
+\setlist[itemize]{noitemsep}
+\setlist[enumerate]{noitemsep}
+
+%% ============================================================
+%% Internal storage
+%% ============================================================
+\newcommand{\@scai@keywords}{}
+\newcommand{\@scai@abstract}{}
+
+\newif\if@scai@haskeywords   \@scai@haskeywordsfalse
+\newif\if@scai@hascorrespondence \@scai@hascorrespondencefalse
+
+%% Generic metadata list
+\newcounter{scai@nummeta}
+\setcounter{scai@nummeta}{0}
+
+%% ============================================================
+%% User-facing commands: metadata
+%% ============================================================
+\newcommand{\scaikeywords}[1]{%
+  \renewcommand{\@scai@keywords}{#1}%
+  \@scai@haskeywordstrue
+}
+
+%% Correspondence: \correspondence{Name}{email} (supports multiple calls)
+\newcounter{scai@numcorr}
+\setcounter{scai@numcorr}{0}
+\newcommand{\@scai@corrlist}{}
+\newcommand{\correspondence}[2]{%
+  \@scai@hascorrespondencetrue
+  \stepcounter{scai@numcorr}%
+  \ifnum\value{scai@numcorr}=1
+    \gdef\@scai@corrlist{#1 (\href{mailto:#2}{#2})}%
+  \else
+    \g@addto@macro\@scai@corrlist{, #1 (\href{mailto:#2}{#2})}%
+  \fi
+}
+
+%% Generic metadata: \metadata[Label]{value}
+\newcommand{\metadata}[2][]{%
+  \stepcounter{scai@nummeta}%
+  \expandafter\gdef\csname @scai@meta@\the\value{scai@nummeta}@label\endcsname{#1}%
+  \expandafter\gdef\csname @scai@meta@\the\value{scai@nummeta}@value\endcsname{#2}%
+}
+
+%% ============================================================
+%% Author / affiliation system
+%% ============================================================
+%% Usage:
+%%   \scaiauthor{1}{Yanqiao Zhu}
+%%   \scaiauthor{1,equal}{Yanqiao Zhu}
+%%   \scaiauthor{1,2,equal,corr}{Yanqiao Zhu}
+%%
+%%   \affiliation{1}{University of California, Los Angeles}
+%%   \contribnote{equal}{*}{Equal contribution as first authors.}
+%%   \contribnote{corr}{\ddag}{Corresponding author.}
+%%   \contribnote{lead}{\P}{Project lead.}
+%%
+\newcounter{scai@numauthors}
+\setcounter{scai@numauthors}{0}
+\newcounter{scai@numaffils}
+\setcounter{scai@numaffils}{0}
+\newcounter{scai@numnotes}
+\setcounter{scai@numnotes}{0}
+
+\newcommand{\@scai@authorlist}{}
+\newcommand{\@scai@affillist}{}
+
+%% Define a contribution note:
+%%   \contribnote{key}{symbol}{description}  — explicit symbol
+%%   \contribnote{key}{description}           — auto-assign symbol (*, †, ‡, §, ...)
+%% Must be defined BEFORE \scaiauthor calls that reference the key.
+\NewDocumentCommand{\contribnote}{m m g}{%
+  \stepcounter{scai@numnotes}%
+  \IfNoValueTF{#3}{%
+    %% 2-arg form: store counter value, render \fnsymbol at use time
+    \begingroup
+    \edef\@scai@tmpdef{%
+      \noexpand\gdef\expandafter\noexpand\csname @scai@notesym@#1\endcsname{%
+        \noexpand\@fnsymbol{\the\value{scai@numnotes}}}%
+    }%
+    \@scai@tmpdef
+    \endgroup
+    \expandafter\gdef\csname @scai@notetxt@#1\endcsname{#2}%
+  }{%
+    %% 3-arg form: explicit symbol
+    \expandafter\gdef\csname @scai@notesym@#1\endcsname{#2}%
+    \expandafter\gdef\csname @scai@notetxt@#1\endcsname{#3}%
+  }%
+  %% Store ordering
+  \expandafter\gdef\csname @scai@noteord@\the\value{scai@numnotes}\endcsname{#1}%
+}
+
+%% Add an affiliation: \affiliation{key}{text}
+\newcommand{\affiliation}[2]{%
+  \expandafter\gdef\csname @scai@affil@#1\endcsname{#2}%
+  \stepcounter{scai@numaffils}%
+  \ifnum\value{scai@numaffils}=1
+    \gdef\@scai@affillist{#1}%
+  \else
+    \g@addto@macro\@scai@affillist{,#1}%
+  \fi
+}
+
+%% Resolve a single tag: if it's a contribnote key, use its symbol; otherwise literal
+\newcommand{\@scai@resolvetag}[1]{%
+  \@ifundefined{@scai@notesym@#1}{#1}{\csname @scai@notesym@#1\endcsname}%
+}
+
+%% Add an author: \scaiauthor{tags}{Name}
+\newcommand{\scaiauthor}[2]{%
+  \stepcounter{scai@numauthors}%
+  \ifnum\value{scai@numauthors}=1
+    \gdef\@scai@authorlist{\mbox{#2\textsuperscript{\@scai@rendertags{#1}}}}%
+  \else
+    \g@addto@macro\@scai@authorlist{, \mbox{#2\textsuperscript{\@scai@rendertags{#1}}}}%
+  \fi
+}
+
+%% Render tags: resolve each comma-separated item
+\newcommand{\@scai@rendertags}[1]{%
+  \def\@scai@first{1}%
+  \@for\@scai@curtag:=#1\do{%
+    \if\@scai@first 1\def\@scai@first{0}\else,\fi
+    \@scai@resolvetag{\@scai@curtag}%
+  }%
+}
+
+%% Render affiliation list (line break between affiliation 2 and 3)
+\newcommand{\@scai@renderaffils}{%
+  \begingroup
+  \normalsize\itshape
+  \def\@scai@affilfirst{1}%
+  \@for\@scai@tmp:=\@scai@affillist\do{%
+    \ifnum\@scai@tmp=3\relax \par\def\@scai@affilfirst{1}\fi
+    \if\@scai@affilfirst 1\def\@scai@affilfirst{0}\else ,\space\fi
+    \textsuperscript{\@scai@tmp}%
+    \csname @scai@affil@\@scai@tmp\endcsname
+  }%
+  \par
+  \endgroup
+}
+
+%% Render contribution notes (inline, for footer)
+\newcommand{\@scai@rendercontribfooter}{%
+  \ifnum\value{scai@numnotes}>0
+    \begingroup
+    \newcounter{scai@footiter}%
+    \setcounter{scai@footiter}{0}%
+    \def\@scai@footfirst{1}%
+    \loop\ifnum\value{scai@footiter}<\value{scai@numnotes}%
+      \stepcounter{scai@footiter}%
+      \if\@scai@footfirst 1\def\@scai@footfirst{0}\else \quad\fi
+      \edef\@scai@notekey{\csname @scai@noteord@\the\value{scai@footiter}\endcsname}%
+      \textsuperscript{\csname @scai@notesym@\@scai@notekey\endcsname}%
+      \csname @scai@notetxt@\@scai@notekey\endcsname
+    \repeat
+    \endgroup
+  \fi
+}
+
+%% Render contribution notes (block, for title area)
+\newcommand{\@scai@rendercontribnotes}{%
+  \ifnum\value{scai@numnotes}>0
+    \begingroup
+    \vspace{4pt}%
+    \normalsize\itshape
+    \newcounter{scai@noteiter}%
+    \setcounter{scai@noteiter}{0}%
+    \def\@scai@notefirst{1}%
+    \loop\ifnum\value{scai@noteiter}<\value{scai@numnotes}%
+      \stepcounter{scai@noteiter}%
+      \if\@scai@notefirst 1\def\@scai@notefirst{0}\else \space\fi
+      \edef\@scai@notekey{\csname @scai@noteord@\the\value{scai@noteiter}\endcsname}%
+      \textsuperscript{\csname @scai@notesym@\@scai@notekey\endcsname}%
+      \csname @scai@notetxt@\@scai@notekey\endcsname
+    \repeat
+    \par
+    \endgroup
+  \fi
+}
+
+%% ============================================================
+%% Font commands
+%% ============================================================
+\newcommand{\titlefont}{\huge\sffamily\bfseries}
+\newcommand{\authorfont}{\normalsize\sffamily}
+\newcommand{\keywordsfont}{\normalsize}
+\newcommand{\absfont}{\normalsize}
+\newcommand{\footerfont}{\normalfont\normalsize}
+
+%% ============================================================
+%% Header / Footer (first page and subsequent)
+%% ============================================================
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{0pt}
+\let\@scai@DefaultHeadRule\headrule
+\renewcommand{\headrule}{\color{gray}\@scai@DefaultHeadRule}
+
+%% Default page style — no header, centered page number
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\footerfont\thepage}
+
+%% Override plain style too (used by \maketitle, \chapter, etc.)
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \fancyfoot[C]{\footerfont\thepage}%
+}
+
+%% First-page style — logos + header rule + contrib notes in footer
+\fancypagestyle{scaifirstpage}{%
+  \fancyhf{}%
+  \fancyhead[L]{\includegraphics[height=35pt]{logo/logo.pdf}}%
+  \fancyhead[R]{\includegraphics[height=30pt]{logo/hunyuan-logo.png}}%
+  \fancyfoot[L]{\footnotesize\itshape\@scai@rendercontribfooter}%
+  \fancyfoot[R]{\footerfont\thepage}%
+  \renewcommand{\headrulewidth}{1pt}%
+  \renewcommand{\headrule}{\color{gray}\@scai@DefaultHeadRule}%
+  \renewcommand{\footrulewidth}{0.4pt}%
+}
+
+%% ============================================================
+%% Abstract environment (capture content)
+%% ============================================================
+\def\xabstract{abstract}
+\long\def\abstract#1\end#2{%
+  \def\@scai@temptwo{#2}%
+  \ifx\@scai@temptwo\xabstract
+    \long\gdef\@scai@abstract{\ignorespaces#1}%
+    \def\@scai@go{\end{abstract}}%
+  \else
+    #1\end{#2}%
+    \gdef\@scai@abstract{BADLY FORMED ABSTRACT}%
+    \let\@scai@go\relax
+  \fi
+  \@scai@go
+}
+
+%% ============================================================
+%% Render abstract block (light blue tcolorbox)
+%% ============================================================
+\newcommand{\@scai@renderabstract}{%
+  \begin{tcolorbox}[
+    colframe=uclalightblue,
+    colback=uclalightblue,
+    boxrule=0pt,
+    arc=2mm,
+    enhanced,
+    top=12pt,
+    bottom=12pt,
+    left=15pt,
+    right=15pt,
+    width=\textwidth,
+  ]
+  {\absfont \@scai@abstract}
+  %% Correspondence + generic metadata fields inside abstract box
+  \ifnum\numexpr
+    \ifnum\value{scai@numcorr}>0 1\else 0\fi
+    +\value{scai@nummeta}>0
+    \par\vspace{8pt}
+    \begingroup
+    \fontsize{10}{12}\selectfont
+    \setlength{\parskip}{1pt}%
+    %% Correspondence (always first if present)
+    \if@scai@hascorrespondence
+      {\sffamily\textbf{Correspondence:}} \@scai@corrlist\par
+    \fi
+    %% Generic metadata entries
+    \ifnum\value{scai@nummeta}>0
+      \newcounter{scai@metaiter}%
+      \setcounter{scai@metaiter}{0}%
+      \loop\ifnum\value{scai@metaiter}<\value{scai@nummeta}%
+        \stepcounter{scai@metaiter}%
+        {\sffamily\textbf{\csname @scai@meta@\the\value{scai@metaiter}@label\endcsname:}}
+        \csname @scai@meta@\the\value{scai@metaiter}@value\endcsname\par
+      \repeat
+    \fi
+    \endgroup
+  \fi
+  \end{tcolorbox}
+}
+
+%% ============================================================
+%% \maketitle — left-aligned title block
+%% ============================================================
+\renewcommand{\maketitle}{%
+  \bgroup
+  \setlength{\parindent}{0pt}%
+  \setlength{\parskip}{0pt}%
+  \vspace*{3pt}%
+  %% Title (left-aligned, Arial/Helvetica, bold, black)
+  {\raggedright\titlefont\@title\par}%
+  \vspace{14pt}%
+  %% Author list (Arial/Helvetica)
+  {\raggedright\authorfont\@scai@authorlist\par}%
+  \vspace{8pt}%
+  %% Affiliations
+  {\raggedright\@scai@renderaffils}%
+  %% Keywords
+  \if@scai@haskeywords
+    \vspace{6pt}%
+    {\raggedright\keywordsfont{\sffamily\textbf{Keywords:}} \@scai@keywords\par}%
+  \fi
+  \vspace{10pt}%
+  %% Abstract (includes metadata fields inside the box)
+  \@scai@renderabstract
+  \egroup
+  \thispagestyle{scaifirstpage}%
+}
+
+%% ============================================================
+%% Section headings — UCLA blue, Arial/Helvetica, bold
+%% ============================================================
+\setcounter{secnumdepth}{3}
+
+%% Section headings via \@startsection (like NeurIPS/ICML)
+%% Positive afterskip ensures \nopagebreak is inserted after heading
+\makeatletter
+\renewcommand{\section}{%
+  \@startsection{section}{1}{\z@}%
+    {-3.5ex \@plus -1.0ex \@minus -0.2ex}%
+    { 2.3ex \@plus  0.2ex}%
+    {\Large\sffamily\bfseries\color{uclablue}\raggedright}%
+}
+\renewcommand{\subsection}{%
+  \@startsection{subsection}{2}{\z@}%
+    {-3.25ex \@plus -1.0ex \@minus -0.2ex}%
+    { 1.5ex \@plus  0.2ex}%
+    {\large\sffamily\bfseries\color{uclablue}\raggedright}%
+}
+\renewcommand{\subsubsection}{%
+  \@startsection{subsubsection}{3}{\z@}%
+    {-3.25ex \@plus -1.0ex \@minus -0.2ex}%
+    { 1.5ex \@plus  0.2ex}%
+    {\normalsize\sffamily\bfseries\color{uclablue}\raggedright}%
+}
+\makeatother
+
+%% Prevent widows/orphans and orphaned headings
+\clubpenalty=10000
+\widowpenalty=10000
+\raggedbottom
+
+%% Ensure enough space for heading + content before page break
+\RequirePackage{needspace}
+\makeatletter
+\pretocmd{\@startsection}{\needspace{2\baselineskip}}{}{}
+\makeatother
+
+%% ============================================================
+%% Caption styling
+%% ============================================================
+\DeclareCaptionLabelSeparator{pipe}{ $\vert$ }
+\captionsetup{
+  labelfont={bf,sf},
+  labelsep=pipe,
+  singlelinecheck=off,
+  figurename=Figure,
+  font=normalsize,
+  skip=8pt,
+  aboveskip=10pt,
+  belowskip=10pt,
+}
+\captionsetup[sub]{singlelinecheck=true,font=normalsize}
+\captionsetup[table]{skip=8pt}
+\captionsetup[figure]{skip=8pt}
+
+%% ============================================================
+%% Bibliography
+%% ============================================================
+\addto{\captionsenglish}{\renewcommand{\refname}{References}}
+\def\bibfont{\small}
+
+%% ============================================================
+%% Annotator command for review comments
+%% ============================================================
+%% Usage:
+%%   \annotator{alice}{red}
+%%   \alice{This needs revision.}       → [ALICE: This needs revision.] in red
+%%   \alicedel{Remove this sentence.}   → [ALICE: R̶e̶m̶o̶v̶e̶ ̶t̶h̶i̶s̶.̶] in red (strikethrough)
+%%
+%% With \usepackage[final]{scai}, all annotations are silently removed.
+\RequirePackage[normalem]{ulem}
+\newcommand{\annotator}[2]{%
+  \if@scai@final
+    \expandafter\DeclareDocumentCommand\csname#1\endcsname{o m}{}%
+  \else
+    \expandafter\DeclareDocumentCommand\csname#1\endcsname{o m}{%
+      {\color{#2} [\textbf{\MakeUppercase #1}:\space
+        \IfValueTF{##1}{\sout{##2}}{\ignorespaces##2\unskip}%
+      ]}%
+    }%
+  \fi
+}
+
+%% ============================================================
+%% Appendix support
+%% ============================================================
+%% Reset counters for supplementary numbering (S1, S2, ...)
+\newcommand{\appendixprefix}{%
+\setcounter{figure}{0}%
+\renewcommand{\thefigure}{S\arabic{figure}}%
+\setcounter{table}{0}%
+\renewcommand{\thetable}{S\arabic{table}}%
+\setcounter{lstlisting}{0}%
+\renewcommand{\thelstlisting}{S\arabic{lstlisting}}%
+\setcounter{algorithm}{0}%
+\renewcommand{\thealgorithm}{S\arabic{algorithm}}%
+\setcounter{equation}{0}%
+\renewcommand{\theequation}{S\arabic{equation}}%
+}
+
+%% \makeappendixtitle[title] — starts appendix with title + TOC
+%% Default title is "Supplementary Materials"
+\newcommand{\makeappendixtitle}[1][Supplementary Materials]{%
+  \newpage
+  \appendix
+  \appendixprefix
+  {\centering\Large\sffamily\bfseries #1\par}%
+  \vspace{14pt}%
+  \startcontents[appendix]%
+  \printcontents[appendix]{}{1}{\setcounter{tocdepth}{2}}%
+}
+
+\endinput
